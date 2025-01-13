@@ -1,6 +1,6 @@
 // Configuration de l'API
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:5000/api', // Changer cette URL quand l'API sera déployée
+    BASE_URL: 'https://quizae.onrender.com', // Changer cette URL quand l'API sera déployée
     HEADERS: {
         'Content-Type': 'application/json'
     }
