@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Game</title>
+    <script src="config.js"></script>
+    <script src="connection.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#home" onclick="showSection('home')">Accueil</a></li>
+            <li><a href="#duel" onclick="showSection('duel')">Mode Duel</a></li>
+            <li><a href="#ranking" onclick="showSection('ranking')">Classement</a></li>
+        </ul>
+    </nav>
+
+    <!-- Section Accueil -->
+    <section id="home" class="hero">
+        <h1>Quiz Game</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 2rem;">Testez vos connaissances et défiez vos amis !</p>
+
+        <div class="login-form">
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button class="button" onclick="login()">Se connecter</button>
+            <button class="button" style="background-color: #2196F3" onclick="register()">S'inscrire</button>
+        </div>
+
+        <button class="play-button" id="playButton" style="display: none;" onclick="startQuiz()">JOUER</button>
+    </section>
+
+    <!-- Section Classement -->
+    <section id="ranking" class="container" style="display: none;">
+        <h1>Classement</h1>
+
+        <div class="theme-filters">
+            <button class="theme-button active" onclick="showLeaderboard('general')">Général</button>
+            <button class="theme-button" onclick="showLeaderboard('histoire')">Histoire</button>
+            <button class="theme-button" onclick="showLeaderboard('sciences')">Sciences</button>
+            <button class="theme-button" onclick="showLeaderboard('geographie')">Géographie</button>
+            <button class="theme-button" onclick="showLeaderboard('sport')">Sport</button>
+            <button class="theme-button" onclick="showLeaderboard('culture')">Culture Générale</button>
+        </div>
+
+        <div class="leaderboard" id="leaderboardContent">
+            <!-- Le contenu sera chargé dynamiquement via JavaScript -->
+        </div>
+    </section>
+
+    <!-- Section Duel -->
+    <section id="duel" class="container" style="display: none;">
+        <div id="mainMenu">
+            <h1>Mode Duel</h1>
+            
+            <div class="duel-options">
+                <div class="duel-card">
+                    <h2>Créer un salon</h2>
+                    <p>Créez votre propre salon et invitez vos amis à vous rejoindre pour un duel passionnant !</p>
+                    <button class="button create-button" onclick="createRoom()">Créer un salon</button>
+                </div>
+                
+                <div class="duel-card">
+                    <h2>Rejoindre un salon</h2>
+                    <p>Rejoignez un salon existant en utilisant le code fourni par votre ami.</p>
+                    <button class="button join-button" onclick="showJoinRoom()">Rejoindre un salon</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="room-code" id="joinRoomSection">
+            <h2>Entrez le code du salon</h2>
+            <div>
+                <input type="text" id="roomCode" placeholder="Code à 4 chiffres" maxlength="4">
+                <button class="button join-button" onclick="joinRoom()">Rejoindre</button>
+            </div>
+            <button class="button" style="background-color: #666; margin-top: 1rem;" onclick="backToMenu()">Retour</button>
+        </div>
+
+        <div class="waiting-room" id="waitingRoom">
+            <h2>Salon d'attente</h2>
+            <p id="roomCodeDisplay"></p>
+            
+            <div class="player-list" id="playerList">
+                <!-- Les joueurs seront ajoutés ici dynamiquement -->
+            </div>
+
+            <button id="startButton" class="button" onclick="startDuel()">Démarrer la partie (2 joueurs minimum)</button>
+            <button class="button" style="background-color: #666; margin-top: 1rem;" onclick="backToMenu()">Quitter le salon</button>
+        </div>
+    </section>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.getElementById('home').style.display = 'none';
+            document.getElementById('duel').style.display = 'none';
+            document.getElementById('ranking').style.display = 'none';
+            document.getElementById(sectionId).style.display = sectionId === 'home' ? 'flex' : 'block';
+        }
+
+        // Fonctions de connexion
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const data = {
+                type: 'login',
+                data: {
+                    username: username,
+                    password: password
+                }
+            };
+
+            const socket = new WebSocket('ws://localhost:12345');
+            
+            socket.onopen = function() {
+                socket.send(JSON.stringify(data));
+            };
+            
+            socket.onmessage = function(event) {
+                const response = JSON.parse(event.data);
+                console.log('Réponse reçue:', response);
+                
+                if (response.status === 'success') {
+                    localStorage.setItem('user_id', response.user_id);
+                    localStorage.setItem('username', username);
+                    document.querySelector('.login-form').style.display = 'none';
+                    document.getElementById('playButton').style.display = 'block';
+                } else {
+                    alert('Erreur de connexion: ' + response.message);
+                }
+            };
+
+            socket.onerror = function(error) {
+                console.error('Erreur WebSocket:', error);
+                alert('Erreur de connexion au serveur');
+            };
+        }
+
+        function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const data = {
+                type: 'register',
+                data: {
+                    username: username,
+                    password: password
+                }
+            };
+
+            const socket = new WebSocket('ws://localhost:12345');
+            
+            socket.onopen = function() {
+                socket.send(JSON.stringify(data));
+            };
+            
+            socket.onmessage = function(event) {
+                const response = JSON.parse(event.data);
+                if (response.status === 'success') {
+                    alert('Inscription réussie ! Vous pouvez maintenant vous connecter.');
+                    login();
+                } else {
+                    alert('Erreur lors de l\'inscription: ' + response.message);
+                }
+            };
+        }
+
+        function startQuiz() {
+            const clientConnection = localStorage.getItem('client_connection');
+            if (clientConnection) {
+                fetch('http://localhost:12345/start_game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: localStorage.getItem('user_id'),
+                        action: 'start_game'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = 'quiz.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Une erreur est survenue lors du lancement du quiz');
+                });
+            }
+        }
+
+        // Fonctions du classement
+        function showLeaderboard(theme) {
+            const themeButtons = document.querySelectorAll('.theme-button');
+            themeButtons.forEach(button => button.classList.remove('active'));
+            event.target.classList.add('active');
+
+            fetch(`http://localhost:12345/get_leaderboard?theme=${theme}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updateLeaderboardDisplay(data.scores);
+                }
+            });
+        }
+
+        function updateLeaderboardDisplay(scores) {
+            const leaderboardContent = document.getElementById('leaderboardContent');
+            let html = `
+                <div class="leaderboard-header">
+                    <div>Rang</div>
+                    <div>Joueur</div>
+                    <div>Score</div>
+                    <div>Temps</div>
+                </div>
+            `;
+            
+            scores.forEach((score, index) => {
+                html += `
+                    <div class="leaderboard-row">
+                        <div class="rank">${index + 1}</div>
+                        <div>${score.username}</div>
+                        <div class="score">${score.score}</div>
+                        <div class="time">${score.time}s</div>
+                    </div>
+                `;
+            });
+
+            leaderboardContent.innerHTML = html;
+        }
+
+        // Fonctions du mode duel
+        let isHost = false;
+        let currentRoomCode = '';
+
+        function createRoom() {
+            fetch('http://localhost:12345/create_duel_room', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: localStorage.getItem('user_id'),
+                    type: 'create_duel_room'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentRoomCode = data.room_code;
+                    isHost = true;
+                    showWaitingRoom();
+                    startPlayerUpdates();
+                }
+            });
+        }
+
+        function startPlayerUpdates() {
+            setInterval(() => {
+                updatePlayerList();
+            }, 2000);
+        }
+
+        function showJoinRoom() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('joinRoomSection').style.display = 'block';
+            document.getElementById('waitingRoom').style.display = 'none';
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('roomCode').value;
+            if (code.length === 4) {
+                currentRoomCode = code;
+                isHost = false;
+                showWaitingRoom();
+
+                fetch('http://localhost:12345/join_duel_room', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: localStorage.getItem('user_id'),
+                        room_code: code
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        startPlayerUpdates();
+                    } else {
+                        alert(data.message);
+                        backToMenu();
+                    }
+                });
+            } else {
+                alert('Veuillez entrer un code à 4 chiffres');
+            }
+        }
+
+        function showWaitingRoom() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('joinRoomSection').style.display = 'none';
+            document.getElementById('waitingRoom').style.display = 'block';
+            document.getElementById('roomCodeDisplay').textContent = `Code du salon : ${currentRoomCode}`;
+            document.getElementById('startButton').style.display = isHost ? 'block' : 'none';
+            
+            updatePlayerList();
+        }
+
+        function updatePlayerList() {
+            fetch(`http://localhost:12345/get_room_players?room_code=${currentRoomCode}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const playerList = document.getElementById('playerList');
+                    playerList.innerHTML = '';
+                    
+                    data.players.forEach(player => {
+                        const div = document.createElement('div');
+                        div.className = 'player-item';
+                        div.innerHTML = `
+                            <span>${player.username}</span>
+                            ${player.isHost ? '<span class="host-badge">Hôte</span>' : ''}
+                        `;
+                        playerList.appendChild(div);
+                    });
+
+                    if (isHost) {
+                        const startButton = document.getElementById('startButton');
+                        startButton.disabled = data.players.length < 2;
+                    }
+                }
+            });
+        }
+
+        function backToMenu() {
+            document.getElementById('mainMenu').style.display = 'block';
+            document.getElementById('joinRoomSection').style.display = 'none';
+            document.getElementById('waitingRoom').style.display = 'none';
+            
+            if (currentRoomCode) {
+                fetch('http://localhost:12345/leave_room', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: localStorage.getItem('user_id'),
+                        room_code: currentRoomCode
+                    })
+                });
+            }
+            
+            currentRoomCode = '';
+            isHost = false;
+        }
+
+        function startDuel() {
+            fetch('http://localhost:12345/start_duel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    room_code: currentRoomCode,
+                    user_id: localStorage.getItem('user_id')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = 'quiz.html';
+                } else {
+                    alert('Erreur lors du démarrage du duel: ' + data.message);
+                }
+            });
+        }
+
+        // Charger la section appropriée au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.slice(1) || 'home';
+            showSection(hash);
+        });
+    </script>
+    <script src="script.js"></script>
+
+</body>
+</html>
