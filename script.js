@@ -359,6 +359,43 @@ function startPlayerUpdates() {
         updatePlayerList();
     }, 2000);
 }
+// Ajoutez cette fonction dans script.js
+async function startQuiz() {
+    const userId = localStorage.getItem('user_id');
+    const themeId = localStorage.getItem('current_theme_id');
+
+    try {
+        const response = await QuizAPI.startGame(themeId, userId);
+        if (response.status === 'success') {
+            localStorage.setItem('current_game_id', response.game_id);
+            window.location.href = 'quiz.html';
+        } else {
+            alert('Erreur lors du démarrage du quiz: ' + response.message);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors du lancement du quiz');
+    }
+}
+
+// Fonction pour sélectionner un thème (ajoutez également cette fonction)
+async function handleThemeSelection(themeId) {
+    localStorage.setItem('current_theme_id', themeId);
+    const userId = localStorage.getItem('user_id');
+    
+    try {
+        const response = await QuizAPI.startGame(themeId, userId);
+        if (response.status === 'success') {
+            localStorage.setItem('current_game_id', response.game_id);
+            window.location.href = 'quiz.html';
+        } else {
+            alert('Erreur lors du démarrage du quiz');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors du lancement du quiz');
+    }
+}
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
