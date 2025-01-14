@@ -6,7 +6,7 @@ import json
 import time
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*: {"origins": "*"}})
 
 # Ajoutez cet endpoint au début du fichier app.py, après la création de l'app
 @app.route('/')
