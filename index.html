@@ -97,6 +97,21 @@
             <button class="button" style="background-color: #666; margin-top: 1rem;" onclick="backToMenu()">Quitter le salon</button>
         </div>
     </section>
+    <!-- Section Quiz -->
+<section id="quiz" class="container" style="display: none;">
+    <h1 id="questionText"></h1>
+    
+    <div class="quiz-info">
+        <div class="timer">Temps: <span id="timer">30</span>s</div>
+        <div class="score">Score: <span id="score">0</span></div>
+    </div>
+
+    <div id="answers" class="answers-container">
+        <!-- Les réponses seront ajoutées ici dynamiquement -->
+    </div>
+
+    <button class="button skip-button" onclick="handleAnswer(null)">Passer</button>
+</section>
 
   
           
