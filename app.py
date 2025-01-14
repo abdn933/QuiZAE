@@ -6,15 +6,16 @@ import json
 import time
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*: {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Ajoutez cet endpoint au début du fichier app.py, après la création de l'app
 @app.route('/')
 def home():
     return jsonify({
         'status': 'success',
         'message': 'Quiz Game API is running'
     })
+
+
 
 # Initialisation de la base de données
 db = QuizDatabase('quiz.db')
