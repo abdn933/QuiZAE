@@ -42,11 +42,10 @@ def initialize_test_data():
         db.cursor.execute("SELECT theme_id FROM themes WHERE theme_name = ?", (theme_name,))
         theme_ids[theme_name] = db.cursor.fetchone()[0]
 
-    # Insérer ici toutes vos questions de test depuis quiz_serveur.py
+    # Ajout des questions de test
     test_questions = {
         "Histoire": [
-            
-             {
+            {
                 "type": QuestionType.DUAL,
                 "question": "La Seconde Guerre mondiale a-t-elle commencé en 1939?",
                 "correct": "Oui",
@@ -191,11 +190,9 @@ def initialize_test_data():
                 "wrong": ["Kaiser Wilhelm II"]
             },
 
-            
-            
         ],
         "Sciences": [
-             {
+            {
                 "type": QuestionType.DUAL,
                 "question": "L'eau bout-elle à 100°C au niveau de la mer?",
                 "correct": "Oui",
@@ -346,15 +343,9 @@ def initialize_test_data():
                 "correct": "Câble en fibre de verre",
                 "wrong": ["Câble en cuivre", "Câble coaxial", "Câble à paire torsadée"]
             },
-        
-            
-            
-           
         ],
-        
-        # ... autres thèmes ...
         "Géographie": [
-            {
+             {
                 "type": QuestionType.DUAL,
                 "question": "Le Nil est-il le plus long fleuve du monde?",
                 "correct": "Oui",
@@ -498,6 +489,7 @@ def initialize_test_data():
                 "correct": "Rome",
                 "wrong": ["Jérusalem", "Athènes", "Istanbul"]
             },
+           
         ],
         "Sport": [
             {
@@ -772,6 +764,81 @@ def initialize_test_data():
                 "correct": "64",
                 "wrong": ["48", "54", "100"]
             },
+            
+        ],
+        "Culture Générale": [
+            {
+                "type": QuestionType.DUAL,
+                "question": "La Joconde est-elle au Louvre?",
+                "correct": "Oui",
+                "wrong": ["Non"]
+            },
+            {
+                "type": QuestionType.QUAD,
+                "question": "Qui a peint la Joconde?",
+                "correct": "Leonard de Vinci",
+                "wrong": ["Michel-Ange", "Raphaël", "Botticelli"]
+            },
+            {
+                "type": QuestionType.DUAL,
+                "question": "Quel célèbre magicien est connu pour son tour « de l’évasion » ?",
+                "correct": "Harry Houdini",
+                "wrong": ["David Copperfield"]
+            },
+            {
+                "type": QuestionType.DUAL,
+                "question": "Quelle couleur obtient-on en mélangeant du bleu et du jaune ?",
+                "correct": "Vert",
+                "wrong": ["Violet"]
+            },
+            {
+                "type": QuestionType.OPEN,
+                "question": "Quel est le prénom du personnage principal dans le roman Madame Bovary ?",
+                "correct": "Emma",
+                "wrong": []
+            },
+            {
+                "type": QuestionType.OPEN,
+                "question": "Quel film a remporté l'Oscar du meilleur film en 1998 ?",
+                "correct": "Titanic",
+                "wrong": []
+            },
+            {
+                "type": QuestionType.OPEN,
+                "question": "Quelle est la capitale de la mode en Italie ?",
+                "correct": "Milan",
+                "wrong": []
+            },
+            {
+                "type": QuestionType.OPEN,
+                "question": "Quel est le plat principal traditionnel de l'Espagne ?",
+                "correct": "Paella",
+                "wrong": []
+            },
+            {
+                "type": QuestionType.QUAD,
+                "question": "Quel auteur a écrit Les Misérables ?",
+                "correct": "Victor Hugo",
+                "wrong": ["Flaubert", "Émile Zola", "Botticelli"]
+            },
+            {
+                "type": QuestionType.QUAD,
+                "question": "Quelle série met en scène les familles Stark, Lannister et Targaryen ?",
+                "correct": "Games of Thrones",
+                "wrong": ["Breaking Bad", "The Witcher", "VIkings"]
+            },
+            {
+                "type": QuestionType.QUAD,
+                "question": "Quel peintre est célèbre pour ses nénuphars ?",
+                "correct": "Claude Monet",
+                "wrong": ["Salvador Dali", "Pablo Picasso", "Paul Cézanne"]
+            },
+            {
+                "type": QuestionType.QUAD,
+                "question": "Quel est le nombre total de cases sur un échiquier ?",
+                "correct": "64",
+                "wrong": ["48", "54", "100"]
+            },
             {
                 "type": QuestionType.QUAD,
                 "question": "Quelle est la devise nationale de la France ?",
@@ -802,17 +869,10 @@ def initialize_test_data():
                 "correct": "Deadpool",
                 "wrong": ["Batman", "Spider-Man", "Superman"]
             },
-
-
-
+            
         ]
     }
 
-        
-        
-    
-
-    # Ajout des questions dans la base de données
     for theme_name, questions in test_questions.items():
         theme_id = theme_ids[theme_name]
         for q in questions:
@@ -965,6 +1025,79 @@ def add_unique_questions(question_list, count, used_questions):
             used_questions.add(question_text)
             added.append(q)
     return added
+
+@app.route('/api/create_duel_room', methods=['POST'])
+def create_duel_room():
+    data = request.json
+    theme_id = data.get('theme_id')
+    user_id = data.get('user_id')
+
+    if not theme_id or not user_id:
+        return jsonify({'status': 'error', 'message': 'Données manquantes'})
+
+    room_code = str(int(time.time()))[-4:]  # Générer un code unique sur 4 chiffres
+    duel_rooms[room_code] = {
+        'theme_id': theme_id,
+        'players': [{'user_id': user_id, 'is_host': True}],
+        'game_started': False
+    }
+
+    return jsonify({'status': 'success', 'room_code': room_code})
+
+@app.route('/api/join_duel_room', methods=['POST'])
+def join_duel_room():
+    data = request.json
+    room_code = data.get('room_code')
+    user_id = data.get('user_id')
+
+    if room_code not in duel_rooms:
+        return jsonify({'status': 'error', 'message': 'Code de salle invalide'})
+
+    room = duel_rooms[room_code]
+    if room['game_started']:
+        return jsonify({'status': 'error', 'message': 'Le jeu a déjà commencé'})
+
+    if any(player['user_id'] == user_id for player in room['players']):
+        return jsonify({'status': 'error', 'message': 'Utilisateur déjà dans la salle'})
+
+    room['players'].append({'user_id': user_id, 'is_host': False})
+    return jsonify({'status': 'success'})
+
+@app.route('/api/room_players', methods=['GET'])
+def get_room_players():
+    room_code = request.args.get('room_code')
+
+    if room_code not in duel_rooms:
+        return jsonify({'status': 'error', 'message': 'Code de salle invalide'})
+
+    room = duel_rooms[room_code]
+    players = [
+        {'user_id': player['user_id'], 'is_host': player['is_host']}
+        for player in room['players']
+    ]
+
+    return jsonify({'status': 'success', 'players': players, 'game_started': room['game_started']})
+
+@app.route('/api/start_duel', methods=['POST'])
+def start_duel():
+    data = request.json
+    room_code = data.get('room_code')
+    user_id = data.get('user_id')
+
+    if room_code not in duel_rooms:
+        return jsonify({'status': 'error', 'message': 'Code de salle invalide'})
+
+    room = duel_rooms[room_code]
+    host = next((player for player in room['players'] if player['is_host']), None)
+
+    if not host or host['user_id'] != user_id:
+        return jsonify({'status': 'error', 'message': 'Seul l’hôte peut démarrer la partie'})
+
+    room['game_started'] = True
+    game_id = f"duel_{room_code}_{int(time.time())}"
+    room['game_id'] = game_id
+
+    return jsonify({'status': 'success', 'game_id': game_id})
 
 if __name__ == '__main__':
     # Initialiser les données de test au démarrage
