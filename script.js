@@ -1,6 +1,6 @@
 // Configuration de l'API
 const API_CONFIG = {
-    BASE_URL: 'https://votre-app.onrender.com/api', // noter le /api à la fin
+    BASE_URL: 'https://quizae.onrender.com/api', // noter le /api à la fin
     HEADERS: {
         'Content-Type': 'application/json'
     }
