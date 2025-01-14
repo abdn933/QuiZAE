@@ -282,3 +282,86 @@ function checkAuth() {
     }
     return true;
 }
+// Ajoutez tout ce qui suit à la fin de votre fichier script.js actuel
+
+// Navigation
+function showSection(sectionId) {
+    document.getElementById('home').style.display = 'none';
+    document.getElementById('duel').style.display = 'none';
+    document.getElementById('ranking').style.display = 'none';
+    document.getElementById(sectionId).style.display = sectionId === 'home' ? 'flex' : 'block';
+}
+
+// Fonction pour afficher la salle d'attente
+function showWaitingRoom() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('joinRoomSection').style.display = 'none';
+    document.getElementById('waitingRoom').style.display = 'block';
+    document.getElementById('roomCodeDisplay').textContent = `Code du salon : ${currentRoomCode}`;
+    document.getElementById('startButton').style.display = isHost ? 'block' : 'none';
+    
+    updatePlayerList();
+}
+
+// Fonction pour afficher l'interface de rejoindre une salle
+function showJoinRoom() {
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('joinRoomSection').style.display = 'block';
+    document.getElementById('waitingRoom').style.display = 'none';
+}
+
+// Fonction pour revenir au menu principal
+function backToMenu() {
+    document.getElementById('mainMenu').style.display = 'block';
+    document.getElementById('joinRoomSection').style.display = 'none';
+    document.getElementById('waitingRoom').style.display = 'none';
+    
+    if (currentRoomCode) {
+        // Nettoyer les données du salon
+        currentRoomCode = '';
+        isHost = false;
+    }
+}
+
+// Avant la partie des fonctions asynchrones, ajoutez ces variables globales
+let isHost = false;
+let currentRoomCode = '';
+
+// Fonction de mise à jour du tableau des scores
+function updateLeaderboardDisplay(scores) {
+    const leaderboardContent = document.getElementById('leaderboardContent');
+    let html = `
+        <div class="leaderboard-header">
+            <div>Rang</div>
+            <div>Joueur</div>
+            <div>Score</div>
+            <div>Temps</div>
+        </div>
+    `;
+    
+    scores.forEach((score, index) => {
+        html += `
+            <div class="leaderboard-row">
+                <div class="rank">${index + 1}</div>
+                <div>${score[0]}</div>
+                <div class="score">${score[1]}</div>
+                <div class="time">${score[2]}s</div>
+            </div>
+        `;
+    });
+
+    leaderboardContent.innerHTML = html;
+}
+
+// Fonction pour démarrer les mises à jour de la liste des joueurs
+function startPlayerUpdates() {
+    setInterval(() => {
+        updatePlayerList();
+    }, 2000);
+}
+
+// Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+    const hash = window.location.hash.slice(1) || 'home';
+    showSection(hash);
+});
