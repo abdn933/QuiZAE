@@ -316,3 +316,61 @@ h1 {
     color: #666;
     font-style: italic;
 }
+/* Styles pour la section Quiz */
+.quiz-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+    font-size: 1.2rem;
+}
+
+.timer {
+    color: #2196F3;
+    font-weight: bold;
+}
+
+.score {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.answers-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.answer-button {
+    padding: 15px;
+    font-size: 1.1rem;
+    background-color: white;
+    border: 2px solid #2196F3;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.answer-button:hover {
+    background-color: #2196F3;
+    color: white;
+}
+
+.skip-button {
+    background-color: #666;
+    color: white;
+    margin-top: 20px;
+}
+
+.skip-button:hover {
+    background-color: #555;
+}
+
+.answer-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+    border: 2px solid #2196F3;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
