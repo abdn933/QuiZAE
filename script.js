@@ -396,6 +396,135 @@ async function handleThemeSelection(themeId) {
         alert('Une erreur est survenue lors du lancement du quiz');
     }
 }
+// Variables globales pour le quiz
+let currentGame = null;
+let timeLeft = 30;
+let timerInterval = null;
+
+async function startQuiz() {
+    if (!localStorage.getItem('user_id')) {
+        alert('Veuillez vous connecter');
+        return;
+    }
+
+    try {
+        // Afficher l'interface de sélection des thèmes
+        showSection('home');
+        document.querySelector('.login-form').style.display = 'none';
+        
+        // Charger les thèmes
+        const response = await QuizAPI.getThemes();
+        if (response.status === 'success') {
+            const themeContainer = document.createElement('div');
+            themeContainer.className = 'theme-selection';
+            themeContainer.innerHTML = '<h2>Choisissez un thème</h2>';
+            
+            response.themes.forEach(([id, name]) => {
+                const button = document.createElement('button');
+                button.className = 'button';
+                button.textContent = name;
+                button.onclick = () => startGameWithTheme(id);
+                themeContainer.appendChild(button);
+            });
+            
+            document.querySelector('.hero').appendChild(themeContainer);
+        }
+    } catch (error) {
+        alert('Erreur lors du chargement des thèmes');
+    }
+}
+
+async function startGameWithTheme(themeId) {
+    try {
+        const response = await QuizAPI.startGame(themeId, localStorage.getItem('user_id'));
+        if (response.status === 'success') {
+            currentGame = response;
+            showSection('quiz');
+            showQuestion(response.question);
+            startTimer();
+        }
+    } catch (error) {
+        alert('Erreur lors du démarrage du jeu');
+    }
+}
+
+function showQuestion(question) {
+    document.getElementById('questionText').textContent = question[4];
+    const answersContainer = document.getElementById('answers');
+    answersContainer.innerHTML = '';
+    
+    if (question[2] === 5) { // Question ouverte
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'answer-input';
+        input.placeholder = 'Votre réponse';
+        
+        const submitButton = document.createElement('button');
+        submitButton.className = 'button';
+        submitButton.textContent = 'Valider';
+        submitButton.onclick = () => handleAnswer(input.value);
+        
+        answersContainer.appendChild(input);
+        answersContainer.appendChild(submitButton);
+    } else {
+        const answers = [question[5]];
+        if (question[6]) answers.push(question[6]);
+        if (question[7]) answers.push(question[7]);
+        if (question[8]) answers.push(question[8]);
+        
+        answers.sort(() => Math.random() - 0.5);
+        
+        answers.forEach(answer => {
+            if (answer) {
+                const button = document.createElement('button');
+                button.className = 'answer-button';
+                button.textContent = answer;
+                button.onclick = () => handleAnswer(answer);
+                answersContainer.appendChild(button);
+            }
+        });
+    }
+}
+
+async function handleAnswer(answer) {
+    clearInterval(timerInterval);
+    
+    const timeTaken = 30 - timeLeft;
+    const response = await QuizAPI.submitAnswer(
+        currentGame.game_id,
+        answer,
+        timeTaken
+    );
+    
+    if (response.status === 'success') {
+        document.getElementById('score').textContent = currentGame.score;
+        
+        if (response.game_finished) {
+            alert('Quiz terminé !');
+            showSection('home');
+        } else {
+            showQuestion(response.next_question);
+            timeLeft = 30;
+            startTimer();
+        }
+    }
+}
+
+function startTimer() {
+    timeLeft = 30;
+    document.getElementById('timer').textContent = timeLeft;
+    
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            handleAnswer(null);
+        }
+    }, 1000);
+}
 
 // Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
